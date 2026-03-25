@@ -1,0 +1,27 @@
+{
+  "prompt_file": "d:/ON_GOING/vs_code/langgraph_agent/prompt_case_001.json",
+  "use_prompt_file_for_first_turn": false,
+  "session_id": "case_001",
+  "thread_id": "case_001",
+  "interactive": true,
+  "image_dir": "d:/ON_GOING/vs_code/langgraph_agent/inputs/images/case_001",
+  "markdown_path": [
+    "d:/ON_GOING/vs_code/langgraph_agent/inputs/rules/common",
+    "d:/ON_GOING/vs_code/langgraph_agent/inputs/rules/case_001"
+  ],
+  "geometry_context_path": null,
+  "blender_executable": "E:/Software/Blender/blender.exe",
+  "blend_file": "d:/ON_GOING/vs_code/langgraph_agent/outputs/blend_files/case_001_working.blend",
+  "output_dir": "d:/ON_GOING/vs_code/langgraph_agent/outputs",
+  "auto_execute_generated_script": true,
+  "node_switches": {
+    "global_enabled": true,
+    "node1_collect_requirements": true,
+    "node2_internet_research": false,
+    "node3_image_analysis": true,
+    "node4_markdown_analysis": false,
+    "node5_prompt_synthesis": true,
+    "node6_geometry_constraints": false,
+    "node7_script_generation": true
+  }
+}

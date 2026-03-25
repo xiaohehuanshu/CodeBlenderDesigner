@@ -1,0 +1,285 @@
+Metadata-Version: 2.4
+Name: langgraph-space-agent
+Version: 0.1.0
+Summary: LangGraph-based intelligent architectural space design agent
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: langgraph>=0.4.0
+Requires-Dist: langchain-core>=0.3.0
+Requires-Dist: pydantic>=2.10.6
+
+# LangGraph 智能建筑空间设计 Agent
+
+这个项目位于 `langgraph_agent/` 目录下，面向“建筑空间设计需求收集 -> 参考知识整理 -> Blender 几何约束理解 -> 建筑形体脚本生成”的工作流。
+
+当前约定是：
+
+- `run_agent.py` 是唯一推荐启动入口
+- `config.py` 提供缺省配置
+- `request_*.json` 提供每次 case 的固定运行参数
+- `prompt_*.json` 提供每次首轮输入的 `user_input`
+
+## 功能概览
+
+工作流包含 7 个核心节点，并且每个节点都带独立开关：
+
+1. 节点 1：收集用户需求，判断是新生成、基于记忆修改，还是结束流程
+2. 节点 2：调用通义千问做联网研究与总结
+3. 节点 3：调用通义千问分析本地参考图片，归纳建筑空间与细节风格
+4. 节点 4：读取本地 Markdown 规则文件并总结
+5. 节点 5：统一整理节点 1-4 的信息，形成后续生成 Prompt
+6. 节点 6：通过 Blender 脚本提取用户选中的设计范围和周边环境几何约束
+7. 节点 7：以 Agent 方式调用 OpenAI API 生成 Blender Python 脚本，并支持后续多轮修改
+
+额外能力：
+
+- 文件记忆：保存在 `outputs/memory/<session_id>.json`
+- 节点 2 联网研究结果落盘：保存在 `outputs/internet_research/<session_id>/`
+- 节点 7 支持多轮对话式修改，用户可以继续评论，直到语义结束
+- 运行过程会实时打印 `[RUN]` 和 `[NODE]` 日志，便于在终端或 VS Code 中监控
+
+## 目录结构
+
+```text
+langgraph_agent/
+├─ blender/
+│  └─ collect_geometry_context.py
+├─ inputs/
+│  ├─ images/
+│  │  └─ case_001/
+│  └─ rules/
+│     ├─ common/
+│     └─ case_001/
+│        └─ case_rules.md
+├─ outputs/
+│  ├─ generated_scripts/
+│  ├─ internet_research/
+│  └─ memory/
+├─ src/
+│  └─ langgraph_space_agent/
+│     ├─ __init__.py
+│     ├─ blender_bridge.py
+│     ├─ cli.py
+│     ├─ config.py
+│     ├─ graph.py
+│     ├─ llm_clients.py
+│     ├─ nodes.py
+│     ├─ prompts.py
+│     ├─ state.py
+│     └─ utils.py
+├─ .env.example
+├─ prompt_case_001.json
+├─ request_case_001.json
+├─ pyproject.toml
+├─ README.md
+└─ run_agent.py
+```
+
+## 环境准备
+
+1. 安装依赖
+
+```bash
+pip install -e .
+```
+
+2. 复制环境变量模板
+
+```bash
+copy .env.example .env
+```
+
+至少建议填写：
+
+- `DASHSCOPE_API_KEY`
+- `OPENAI_API_KEY`
+- `OPENAI_BASE_URL`
+- `BLENDER_EXECUTABLE`
+
+说明：
+
+- 节点 1、2、4 默认可调用 Qwen 文本模型
+- 节点 3 默认可调用 Qwen 多模态模型
+- 节点 7 默认走 OpenAI 兼容接口
+- 如果某些 Key 未配置，对应节点会走降级逻辑，而不是直接崩溃
+
+## 配置层级
+
+配置优先级如下：
+
+1. 命令行参数
+2. `request_*.json`
+3. `config.py`
+
+也就是说，`request_case_001.json` 会覆盖 `config.py` 中对应字段；如果命令行再次传入参数，则命令行优先。
+
+## 用户输入放在哪里
+
+首轮需求不建议写死在 `request_case_001.json` 里，而是拆成两个文件：
+
+- `request_case_001.json`：放固定配置
+- `prompt_case_001.json`：放首轮 `user_input`
+
+示例：
+
+`request_case_001.json`
+
+```json
+{
+  "prompt_file": "d:/ON_GOING/vs_code/langgraph_agent/prompt_case_001.json",
+  "session_id": "case_001",
+  "thread_id": "case_001",
+  "image_dir": "d:/ON_GOING/vs_code/langgraph_agent/inputs/images/case_001",
+  "markdown_path": [
+    "d:/ON_GOING/vs_code/langgraph_agent/inputs/rules/common",
+    "d:/ON_GOING/vs_code/langgraph_agent/inputs/rules/case_001"
+  ],
+  "geometry_context_path": null,
+  "blend_file": null,
+  "output_dir": "d:/ON_GOING/vs_code/langgraph_agent/outputs",
+  "auto_execute_generated_script": false,
+  "node_switches": {
+    "global_enabled": true,
+    "node1_collect_requirements": true,
+    "node2_internet_research": false,
+    "node3_image_analysis": false,
+    "node4_markdown_analysis": true,
+    "node5_prompt_synthesis": true,
+    "node6_geometry_constraints": false,
+    "node7_script_generation": true
+  }
+}
+```
+
+`prompt_case_001.json`
+
+```json
+{
+  "user_input": "生成一个沿水岸展开的文化中心体量"
+}
+```
+
+## 输入资料建议路径
+
+推荐按下面方式整理：
+
+```text
+langgraph_agent/
+├─ inputs/
+│  ├─ images/
+│  │  └─ case_001/
+│  │     ├─ 01_massing.jpg
+│  │     ├─ 02_facade.jpg
+│  │     └─ 03_detail.jpg
+│  └─ rules/
+│     ├─ common/
+│     │  ├─ 00_global_rules.md
+│     │  └─ 10_space_combination.md
+│     └─ case_001/
+│        └─ case_rules.md
+```
+
+说明：
+
+- 案例图片放在 `inputs/images/<case_id>/`
+- 通用规则放在 `inputs/rules/common/`
+- 当前项目的专属规则放在 `inputs/rules/<case_id>/case_rules.md`
+- 每个 case 只保留一个项目专属 Markdown 文件即可，不需要 `40_program_requirement` 这类额外文件
+- 如果 `inputs/rules/<case_id>/case_rules.md` 不存在，程序仍然可以运行，只是节点 4 会少一份项目规则输入
+
+## 运行方式
+
+### 单轮运行
+
+```bash
+python d:\ON_GOING\vs_code\langgraph_agent\run_agent.py --request-file d:\ON_GOING\vs_code\langgraph_agent\request_case_001.json
+```
+
+### 交互式多轮运行
+
+```bash
+python d:\ON_GOING\vs_code\langgraph_agent\run_agent.py --request-file d:\ON_GOING\vs_code\langgraph_agent\request_case_001.json --interactive
+```
+
+交互模式下：
+
+- 首轮会先读取 `prompt_case_001.json` 中的 `user_input`
+- 后续你可以在终端继续输入评论或修改要求
+- 当用户输入语义接近“结束”“end”“finish”“停止”时，节点 1 会尝试判定结束流程
+
+### 直接命令行传 prompt
+
+```bash
+python d:\ON_GOING\vs_code\langgraph_agent\run_agent.py --prompt "生成一个沿水岸展开的文化中心体量" --session-id case_001
+```
+
+### 临时关闭部分节点
+
+```bash
+python d:\ON_GOING\vs_code\langgraph_agent\run_agent.py --request-file d:\ON_GOING\vs_code\langgraph_agent\request_case_001.json --disable-node2 --disable-node3
+```
+
+### 使用 Blender 文件导出几何约束
+
+```bash
+python d:\ON_GOING\vs_code\langgraph_agent\run_agent.py --request-file d:\ON_GOING\vs_code\langgraph_agent\request_case_001.json --blend-file "E:\Software\Blender\your_scene.blend"
+```
+
+## 在 VS Code 中运行
+
+可以直接在 VS Code 里运行 [run_agent.py](d:/ON_GOING/vs_code/langgraph_agent/run_agent.py)。
+
+项目已经提供了启动配置：
+
+- [launch.json](d:/ON_GOING/vs_code/langgraph_agent/.vscode/launch.json)
+
+其中包含：
+
+- `LangGraph Agent: Single Run (Recommended)`
+- `LangGraph Agent: Interactive (Recommended)`
+
+当前不再把 `main.py` 作为启动入口，避免入口过多和逻辑重复。
+
+## 运行监测
+
+执行时会在终端实时输出：
+
+- `[RUN]`：整轮任务开始与结束
+- `[NODE]`：每个节点的开始、跳过和完成
+- 节点 2：联网研究结果落盘路径
+- 节点 6：几何上下文读取或导出情况
+- 节点 7：Agent 启动、工具调用、脚本校验、脚本保存与 Blender 执行状态
+
+所以无论你是在 CMD 还是 VS Code 终端中运行，都能看到节点级别的执行进度。
+
+## 节点 2 输出位置
+
+节点 2 的联网研究结果会自动保存到：
+
+```text
+outputs/internet_research/<session_id>/
+├─ node2_summary_latest.md
+├─ node2_summary_latest.json
+└─ history/
+   ├─ <timestamp>_node2.md
+   └─ <timestamp>_node2.json
+```
+
+这样既方便节点 5 汇总，也方便你后续人工复查研究内容。
+
+## Blender 约束说明
+
+`blender/collect_geometry_context.py` 负责：
+
+- 识别编辑模式下被选中的面
+- 计算设计范围的包围盒、中心、面积和法向信息
+- 识别未选中的周边环境几何
+- 输出给节点 6 和节点 7 使用的几何上下文 JSON
+
+`BLENDER_EXECUTABLE` 的用途是给程序一个 Blender 可执行文件路径，用于需要时通过 CLI 调起 Blender 执行脚本。它不会在你每次运行时都强制自动启动，只有涉及几何导出或自动执行生成脚本时才会使用。
+
+## 说明
+
+- `run_agent.py` 现在是唯一推荐入口
+- 包内旧的 `main.py` 入口已经移除，避免重复维护
+- 如果你想继续扩展节点 7，可以在现有 Agent 结构上继续拆分为“体量主结构生成”和“立面细节深化”两个阶段

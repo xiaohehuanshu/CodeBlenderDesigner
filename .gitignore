@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.env
+outputs/*
+一些开发记录文档/*
+文化中心test/*
