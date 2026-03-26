@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+.env
+outputs/generated_scripts/*.py
+outputs/memory/*.json
