@@ -10,7 +10,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from .utils import compact_text, load_json_file
+from .utils import compact_text, ensure_directory, load_json_file
 
 try:
     import winreg
@@ -270,6 +270,106 @@ def validate_blender_script(
     if resolved_path:
         report["message"] += f" INFO: Blender executable resolved via {resolved_source}: {resolved_path}"
     return report
+
+
+def export_scene_to_glb(
+    *,
+    script_path: str,
+    output_glb_path: str | None = None,
+    blend_file: str | None = None,
+    blender_executable: str | None = None,
+    timeout_seconds: int = 120,
+) -> dict[str, Any]:
+    """Execute a generated Blender script then export the scene to .glb.
+
+    The export runs inside Blender after the generation script has built the
+    geometry, so the resulting .glb file contains whatever the script created.
+
+    Returns a dict with keys: glb_path, status, stdout_preview, stderr_preview.
+    """
+    script_file = Path(script_path)
+    if not script_file.exists():
+        return {"glb_path": "", "status": "failed", "message": f"Script not found: {script_path}"}
+
+    resolved = resolve_blender_executable(blender_executable)
+    resolved_path = resolved.get("path") or ""
+
+    if not output_glb_path:
+        output_glb_path = str(script_file.with_suffix(".glb"))
+    ensure_directory(Path(output_glb_path).parent)
+
+    # Build a small export driver script that first runs the generation script,
+    # then exports the scene to glb.
+    export_driver = f'''
+import bpy
+import sys
+
+# Run the generation script in the same Blender Python process.
+generation_script = {repr(str(script_file))}
+exec(open(generation_script).read())
+
+# Export the entire scene to glTF Binary (.glb).
+glb_path = {repr(str(output_glb_path))}
+bpy.ops.export_scene.gltf(
+    filepath=glb_path,
+    export_format="GLB",
+    use_selection=False,
+)
+print(f"GLB exported to: {{glb_path}}")
+'''
+
+    if not resolved_path:
+        return {
+            "glb_path": "",
+            "status": "skipped",
+            "message": "No Blender executable available for GLB export.",
+        }
+
+    with tempfile.TemporaryDirectory(prefix="langgraph_glb_export_") as temp_dir:
+        driver_path = Path(temp_dir) / "_export_driver.py"
+        driver_path.write_text(export_driver, encoding="utf-8")
+
+        command = [resolved_path, "--background"]
+        if blend_file and Path(blend_file).exists():
+            command.append(str(blend_file))
+        else:
+            command.append("--factory-startup")
+        command.extend(["--python", str(driver_path)])
+
+        try:
+            result = subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=timeout_seconds,
+            )
+        except subprocess.TimeoutExpired:
+            return {
+                "glb_path": "",
+                "status": "failed",
+                "message": f"GLB export timed out after {timeout_seconds}s.",
+            }
+
+    glb_file = Path(output_glb_path)
+    if glb_file.exists() and glb_file.stat().st_size > 0:
+        return {
+            "glb_path": str(glb_file),
+            "status": "passed",
+            "message": f"GLB exported successfully: {glb_file} ({glb_file.stat().st_size} bytes)",
+            "stdout_preview": compact_text((result.stdout or "").strip(), 600),
+            "stderr_preview": compact_text((result.stderr or "").strip(), 600),
+        }
+
+    error_detail = _extract_blender_python_runtime_error(result.stdout, result.stderr)
+    return {
+        "glb_path": "",
+        "status": "failed",
+        "message": f"GLB export produced no output file. {error_detail or result.stderr.strip() or ''}",
+        "stdout_preview": compact_text((result.stdout or "").strip(), 600),
+        "stderr_preview": compact_text((result.stderr or "").strip(), 600),
+        "runtime_error_excerpt": compact_text(error_detail, 1200) if error_detail else "",
+    }
 
 
 def _extract_blender_python_runtime_error(stdout_text: str, stderr_text: str) -> str:

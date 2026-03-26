@@ -34,6 +34,8 @@ class AgentState(TypedDict, total=False):
     runtime_diagnosis_history: list[dict[str, Any]]
     runtime_failure_deltas: list[dict[str, Any]]
     execution_result: str
+    glb_export_result: dict[str, Any]
+    glb_path: str
     node_results: dict[str, Any]
     execution_log: Annotated[list[str], operator.add]
     errors: Annotated[list[str], operator.add]

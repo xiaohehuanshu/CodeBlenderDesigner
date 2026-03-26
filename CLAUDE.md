@@ -55,7 +55,7 @@ START → node1 → [should_end?] → END
 - **node5** (`node5_geometry_constraints`): Optional Blender scene geometry extraction
 - **node6** (`node6_prompt_synthesis` + `node6_brief_refinement`): Synthesizes all context into a single `design_brief`
 - **node7** (`node7_script_generation`): Multi-stage Blender script generation (planner → staged generation → compile check)
-- **node8** (`node8_runtime_debug` + `node8_debug_diagnosis` + `node8_debug_repair`): Blender runtime validation and auto-repair
+- **node8** (`node8_runtime_debug` + `node8_debug_diagnosis` + `node8_debug_repair`): Blender runtime validation, auto-repair, and GLB export (after successful validation)
 
 Each node can be independently toggled via `node_switches`. In `modify_existing` mode, nodes 2-4 reuse previous results unless the user explicitly requests a refresh.
 
@@ -71,6 +71,8 @@ Each node can be independently toggled via `node_switches`. In `modify_existing`
 
 **Node7 staged generation**: Instead of a single long output, it plans → generates in 1-3 segments → assembles → validates (Python compile check, then optional Blender runtime validation).
 
+**GLB export pipeline**: After node8 validation passes, `blender_bridge.export_scene_to_glb()` runs the generation script inside Blender and exports the scene to `.glb` format for browser preview / 3D printing. Controlled by `export_glb` setting.
+
 ### Configuration Priority
 
 CLI args > `request_*.json` > `config.py` (which reads from `.env`)
@@ -82,6 +84,8 @@ CLI args > `request_*.json` > `config.py` (which reads from `.env`)
 - `inputs/images/` — Reference images per case
 - `inputs/rules/` — Markdown design rules (common + per-case)
 - `outputs/generated_scripts/` — Generated Blender scripts
+- `outputs/generated_glb/` — Exported GLB 3D model files
+- `outputs/internet_research/` — Web research results
 - `outputs/memory/` — Session memory JSON files
 - `outputs/traces/` — JSONL trace logs
 
@@ -97,6 +101,10 @@ Debug toggles:
 - `PRINT_LLM_PROMPTS=true` — Print full GPT-5.4 request payloads
 - `PRINT_CLI_DIAGNOSTICS=true` — Print startup configuration
 - `PRINT_CLI_FINAL_RESULT_SUMMARY=true` — Print detailed result at end
+
+Feature toggles:
+- `EXPORT_GLB=true` — Auto-export GLB after successful node8 validation (default: true)
+- `AUTO_EXECUTE_GENERATED_SCRIPT=false` — Auto-execute the generated script in Blender
 
 ## Language
 

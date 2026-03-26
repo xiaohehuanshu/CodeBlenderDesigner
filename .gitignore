@@ -31,6 +31,7 @@ Thumbs.db
 # Outputs (langgraph_agent)
 langgraph_agent/outputs/
 langgraph_agent/node8_smoke_fix*.py
+*.glb
 
 # Node / Frontend (future)
 node_modules/

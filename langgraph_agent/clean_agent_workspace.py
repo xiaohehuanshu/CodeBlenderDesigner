@@ -13,6 +13,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 # You can still override them from the command line with --only / --skip / --include-inputs / --full-reset.
 USER_DEFAULTS: dict[str, bool | int] = {
     "clean_generated_scripts": True,
+    "clean_generated_glb": True,
     "clean_internet_research": True,
     "clean_memory": True,
     "clean_traces": True,
@@ -25,6 +26,7 @@ USER_DEFAULTS: dict[str, bool | int] = {
 
 OUTPUT_TARGETS = {
     "clean_generated_scripts": PROJECT_ROOT / "outputs" / "generated_scripts",
+    "clean_generated_glb": PROJECT_ROOT / "outputs" / "generated_glb",
     "clean_internet_research": PROJECT_ROOT / "outputs" / "internet_research",
     "clean_memory": PROJECT_ROOT / "outputs" / "memory",
     "clean_traces": PROJECT_ROOT / "outputs" / "traces",
@@ -37,6 +39,7 @@ INPUT_TARGETS = {
 
 LABELS = {
     "clean_generated_scripts": "outputs/generated_scripts",
+    "clean_generated_glb": "outputs/generated_glb",
     "clean_internet_research": "outputs/internet_research",
     "clean_memory": "outputs/memory",
     "clean_traces": "outputs/traces",

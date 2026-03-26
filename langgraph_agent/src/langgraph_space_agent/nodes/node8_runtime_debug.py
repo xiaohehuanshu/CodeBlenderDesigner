@@ -3,8 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from ..blender_bridge import execute_blender_script
-from ..utils import compact_text, merge_node_result
+from ..blender_bridge import execute_blender_script, export_scene_to_glb
+from ..utils import compact_text, ensure_directory, merge_node_result
 from .base import DESIGN_BRIEF_MAX_CHARS
 
 
@@ -507,6 +507,36 @@ class Node8RuntimeDebugMixin:
                     execution_message = f"Script execution failed: {exc}"
                     self._emit_substep("node8", "execute_script", "failed", str(exc))
 
+        # --- GLB export after successful execution / validation ---
+        glb_export_result: dict[str, Any] = {"status": "skipped", "glb_path": "", "message": "GLB export not attempted."}
+        glb_path = ""
+        should_export_glb = (
+            not used_stub
+            and validation_passed
+            and self.settings.export_glb
+            and request.get("export_glb", True) is not False
+        )
+        if should_export_glb:
+            self._emit_substep("node8", "glb_export", "started")
+            output_dir = ensure_directory(request.get("output_dir") or self.settings.default_output_dir)
+            glb_dir = ensure_directory(output_dir / "generated_glb")
+            default_glb = glb_dir / f"{request.get('session_id', 'default')}.glb"
+            glb_export_result = export_scene_to_glb(
+                script_path=str(target_path),
+                output_glb_path=str(default_glb),
+                blend_file=request.get("blend_file"),
+                blender_executable=request.get("blender_executable") or self.settings.blender_executable,
+                timeout_seconds=request.get("script_validation_timeout_seconds")
+                or self.settings.script_validation_timeout_seconds,
+            )
+            glb_path = glb_export_result.get("glb_path") or ""
+            self._emit_substep(
+                "node8",
+                "glb_export",
+                glb_export_result.get("status", "unknown"),
+                compact_text(glb_export_result.get("message", ""), 200),
+            )
+
         summary_parts = []
         if should_validate_script:
             summary_parts.append(
@@ -523,6 +553,7 @@ class Node8RuntimeDebugMixin:
                 summary_parts.append("auto_execute=skipped_or_failed")
             else:
                 summary_parts.append("auto_execute=done")
+        summary_parts.append(f"glb_export={glb_export_result.get('status', 'skipped')}")
         note = ", ".join(summary_parts) or "runtime validation skipped"
 
         self._emit_substep(
@@ -545,6 +576,8 @@ class Node8RuntimeDebugMixin:
             "runtime_diagnosis_history": runtime_diagnosis_history,
             "runtime_failure_deltas": failure_deltas,
             "execution_result": execution_message,
+            "glb_export_result": glb_export_result,
+            "glb_path": glb_path,
             "node_results": merge_node_result(
                 state.get("node_results"),
                 "node8_runtime_debug",
@@ -559,6 +592,8 @@ class Node8RuntimeDebugMixin:
                     "runtime_repair_attempts": runtime_repair_attempts,
                     "generated_script_path": str(target_path),
                     "execution_result": execution_message,
+                    "glb_export_result": glb_export_result,
+                    "glb_path": glb_path,
                 },
             ),
             "execution_log": [f"node8_runtime_debug: {note}"],

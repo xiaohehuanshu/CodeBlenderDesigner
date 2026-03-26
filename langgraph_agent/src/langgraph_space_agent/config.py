@@ -49,6 +49,7 @@ class RunRequest(BaseModel):
     validate_generated_script: bool = True
     script_validation_timeout_seconds: int | None = None
     auto_execute_generated_script: bool = False
+    export_glb: bool = True
     enable_new_generation_full_script_quick_path: bool | None = None
     node_switches: NodeSwitches = Field(default_factory=NodeSwitches)
 
@@ -79,6 +80,9 @@ class AgentSettings(BaseModel):
     )
     auto_execute_generated_script: bool = Field(
         default_factory=lambda: os.getenv("AUTO_EXECUTE_GENERATED_SCRIPT", "false").strip().lower() == "true"
+    )
+    export_glb: bool = Field(
+        default_factory=lambda: os.getenv("EXPORT_GLB", "true").strip().lower() == "true"
     )
     enable_new_generation_full_script_quick_path: bool = Field(
         default_factory=lambda: os.getenv("ENABLE_NEW_GENERATION_FULL_SCRIPT_QUICK_PATH", "false").strip().lower()
