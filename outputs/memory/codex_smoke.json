@@ -1,0 +1,151 @@
+{
+  "last_route_decision": "new_generation",
+  "last_prompt_collection": "生成一个测试体块方案",
+  "last_research_summary": null,
+  "last_image_analysis_summary": null,
+  "last_markdown_summary": null,
+  "last_consolidated_prompt": "【项目目标】\n生成一个测试体块方案\n\n【联网研究总结】\n无\n\n【图片风格总结】\n无\n\n【Markdown 文本总结】\n无\n\n【几何约束】\n无\n\n【默认类型策略】\n如果用户没有明确要求住宅、别墅或其他居住类项目，请保持为通用建筑方案，不要默认推断为住宅/别墅。\n\n【生成要求】\n请基于以上信息生成建筑空间体量，优先保证功能合理、空间组织清晰、体量与环境协调，并将信息转译成 Blender 可执行的几何建模逻辑。\n\n[Generation Scope Strategy]\n\nThis is a new_generation round. Default to concept-level massing unless the user clearly asks for facade articulation or detail.\nCurrent scope = concept_massing. Focus on primary and secondary volumes, entry emphasis, roof silhouette, major voids, and only the necessary large openings. Avoid repeated windows, dense curtain-wall grids, louvers, railings, and similar high-frequency details unless explicitly requested.\n\n[Generation Scope Strategy]\n\nThis is a new_generation round. Default to concept-level massing unless the user clearly asks for facade articulation or detail.\nCurrent scope = concept_massing. Focus on primary and secondary volumes, entry emphasis, roof silhouette, major voids, and only the necessary large openings. Avoid repeated windows, dense curtain-wall grids, louvers, railings, and similar high-frequency details unless explicitly requested.",
+  "last_consolidated_prompt_source": "local_template",
+  "last_refined_design_brief": "【项目目标】\n生成一个测试体块方案\n\n【联网研究总结】\n无\n\n【图片风格总结】\n无\n\n【Markdown 文本总结】\n无\n\n【几何约束】\n无\n\n【默认类型策略】\n如果用户没有明确要求住宅、别墅或其他居住类项目，请保持为通用建筑方案，不要默认推断为住宅/别墅。\n\n【生成要求】\n请基于以上信息生成建筑空间体量，优先保证功能合理、空间组织清晰、体量与环境协调，并将信息转译成 Blender 可执行的几何建模逻辑。\n\n[Generation Scope Strategy]\n\nThis is a new_generation round. Default to concept-level massing unless the user clearly asks for facade articulation or detail.\nCurrent scope = concept_massing. Focus on primary and secondary volumes, entry emphasis, roof silhouette, major voids, and only the necessary large openings. Avoid repeated windows, dense curtain-wall grids, louvers, railings, and similar high-frequency details unless explicitly requested.\n\n[Generation Scope Strategy]\n\nThis is a new_generation round. Default to concept-level massing unless the user clearly asks for facade articulation or detail.\nCurrent scope = concept_massing. Focus on primary and secondary volumes, entry emphasis, roof silhouette, major voids, and only the necessary large openings. Avoid repeated windows, dense curtain-wall grids, louvers, railings, and similar high-frequency details unless explicitly requested.",
+  "last_refined_design_brief_source": "raw_no_qwen",
+  "last_generation_scope": "concept_massing",
+  "last_generation_scope_reason": "explicit_massing_request",
+  "last_geometry_summary": null,
+  "design_brief_base_values": {
+    "prompt_collection": "生成一个测试体块方案",
+    "research_summary": "",
+    "image_summary": "",
+    "markdown_summary": "",
+    "geometry_summary": ""
+  },
+  "design_brief_active_user_instructions": [],
+  "last_generated_script_path": "outputs\\generated_scripts\\codex_smoke_20260326_213948.py",
+  "last_validation_report": "SKIPPED: fallback stub script.\nSKIPPED: Blender runtime validation disabled by configuration.",
+  "last_runtime_validation_status": "skipped",
+  "last_runtime_validation_mode": "none",
+  "last_execution_result": "Script generated, not executed.",
+  "last_trace_path": "outputs\\traces\\codex_smoke\\20260326_213947_967469_default.jsonl",
+  "conversation_history": [
+    {
+      "role": "user",
+      "content": "生成一个测试体块方案"
+    },
+    {
+      "role": "assistant",
+      "route_decision": "new_generation",
+      "summary": "route_decision=new_generation\ngenerated_script_path=outputs\\generated_scripts\\codex_smoke_20260326_213948.py\nexecution_result=Script generated, not executed.\nvalidation_report=SKIPPED: fallback stub script.\nSKIPPED: Blender runtime validation disabled by configuration.",
+      "generated_script_path": "outputs\\generated_scripts\\codex_smoke_20260326_213948.py"
+    }
+  ],
+  "node_results": {
+    "node1_collect_requirements": {
+      "status": "completed",
+      "route_decision": "new_generation",
+      "should_end": false,
+      "summary": "生成一个测试体块方案",
+      "reason": "未配置 DASHSCOPE_API_KEY，使用启发式逻辑。"
+    },
+    "node2_internet_research": {
+      "status": "skipped",
+      "message": "节点关闭，跳过互联网研究。",
+      "summary": ""
+    },
+    "node3_image_analysis": {
+      "status": "skipped",
+      "message": "未找到可分析的图片。",
+      "summary": ""
+    },
+    "node4_markdown_analysis": {
+      "status": "skipped",
+      "message": "未找到 Markdown 内容。",
+      "summary": ""
+    },
+    "node5_geometry_constraints": {
+      "status": "skipped",
+      "message": "未提供 geometry_context_path，也未提供 blend 文件。",
+      "summary": ""
+    },
+    "node6_prompt_synthesis": {
+      "status": "fallback",
+      "summary": "【项目目标】\n生成一个测试体块方案\n\n【联网研究总结】\n无\n\n【图片风格总结】\n无\n\n【Markdown 文本总结】\n无\n\n【几何约束】\n无\n\n【默认类型策略】\n如果用户没有明确要求住宅、别墅或其他居住类项目，请保持为通用建筑方案，不要默认推断为住宅/别墅。\n\n【生成要求】\n请基于以上信息生成建筑空间体量，优先保证功能合理、空间组织清晰、体量与环境协调，并将信息转译成 Blender 可执行的几何建模逻辑。\n\n[Generation Scope Strategy]\n\nThis is a new_generation round. Default to concept-level massing unless the user clearly asks for facade articulation or detail.\nCurrent scope = concept_massing. Focus on primary and secondary volumes, entry emphasis, roof silhouette, major voids, and only the necessary large openings. Avoid repeated windows, dense curtain-wall grids, louvers, railings, and similar high-frequency details unless explicitly requested.\n\n[Generation Scope Strategy]\n\nThis is a new_generation round. Default to concept-level massing unless the user clearly asks for facade articulation or detail.\nCurrent scope = concept_massing. Focus on primary and secondary volumes, entry emphasis, roof silhouette, major voids, and only the necessary large openings. Avoid repeated windows, dense curtain-wall grids, louvers, railings, and similar high-frequency details unless explicitly requested.",
+      "note": "未配置 DASHSCOPE_API_KEY，使用本地模板整合 Prompt。",
+      "source": "raw_no_qwen",
+      "consolidated_prompt_source": "local_template",
+      "brief_refinement_source": "raw_no_qwen",
+      "generation_scope": "concept_massing",
+      "generation_scope_reason": "explicit_massing_request",
+      "used_previous_design_brief": false,
+      "updated_fields": [],
+      "carried_fields": [],
+      "active_user_instruction_count": 0
+    },
+    "node7_script_generation": {
+      "status": "fallback",
+      "generation_mode": "stub",
+      "summary": "Code generation fell back to a stub script. reason=openai_codegen_unavailable",
+      "prompt_metrics": {
+        "raw_design_brief": {
+          "chars": 1105,
+          "bytes": 1439,
+          "lines": 30
+        },
+        "refined_design_brief": {
+          "chars": 1105,
+          "bytes": 1439,
+          "lines": 30
+        },
+        "geometry_summary": {
+          "chars": 0,
+          "bytes": 0,
+          "lines": 0
+        },
+        "continuity_context": {
+          "chars": 0,
+          "bytes": 0,
+          "lines": 0
+        },
+        "previous_script_key_snippets": {
+          "chars": 0,
+          "bytes": 0,
+          "lines": 0
+        },
+        "previous_script_patch_context": {
+          "chars": 0,
+          "bytes": 0,
+          "lines": 0
+        }
+      },
+      "brief_refinement_source": "raw_no_qwen",
+      "generation_scope": "concept_massing",
+      "generation_scope_reason": "explicit_massing_request",
+      "stage_metrics": {
+        "fallback_reason": "openai_codegen_unavailable",
+        "used_stub": true
+      },
+      "validation_report": "SKIPPED: fallback stub script.",
+      "runtime_validation_status": "skipped",
+      "runtime_validation_mode": "none",
+      "generated_script_path": "outputs\\generated_scripts\\codex_smoke_20260326_213948.py",
+      "execution_result": "Script generated, not executed.",
+      "used_stub": true
+    },
+    "node8_runtime_debug": {
+      "status": "completed",
+      "summary": "runtime_validation=disabled, glb_export=skipped",
+      "validation_report": "SKIPPED: fallback stub script.\nSKIPPED: Blender runtime validation disabled by configuration.",
+      "runtime_validation_status": "skipped",
+      "runtime_validation_mode": "none",
+      "runtime_diagnosis_history": [],
+      "runtime_failure_deltas": [],
+      "runtime_repair_attempts": [],
+      "generated_script_path": "outputs\\generated_scripts\\codex_smoke_20260326_213948.py",
+      "execution_result": "Script generated, not executed.",
+      "glb_export_result": {
+        "status": "skipped",
+        "glb_path": "",
+        "message": "GLB export not attempted."
+      },
+      "glb_path": ""
+    }
+  }
+}

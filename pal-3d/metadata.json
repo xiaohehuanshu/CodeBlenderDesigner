@@ -1,0 +1,5 @@
+{
+  "name": "Pal 3D",
+  "description": "AI for Making - 基于 LangGraph 的建筑空间设计 Agent：从需求整合到 Blender 自动化建模与验证",
+  "requestFramePermissions": []
+}

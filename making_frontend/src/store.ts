@@ -1,22 +1,21 @@
 import { create } from "zustand";
 
-type ParamValue = string | number | boolean;
-type ModelParams = Record<string, ParamValue>;
-type AssetKind = "glb" | "stl";
+type DisplayValue = string | number | boolean;
+type BriefFieldMap = Record<string, DisplayValue>;
+type AssetKind = "glb" | "script" | "trace";
 
 interface GenerateRequest {
   user_input: string;
   session_id?: string;
   thread_id?: string;
   image_dir?: string | null;
-  markdown_path?: string | null;
+  markdown_path?: string | string[] | null;
   geometry_context_path?: string | null;
   blend_file?: string | null;
   output_dir?: string | null;
   validate_generated_script?: boolean;
   auto_execute_generated_script?: boolean;
   export_glb?: boolean;
-  export_stl?: boolean;
 }
 
 interface GenerateResponse {
@@ -26,47 +25,43 @@ interface GenerateResponse {
   should_end: boolean;
   generated_script_path: string | null;
   glb_path: string | null;
-  stl_path: string | null;
   execution_log: string[];
   errors: string[];
   trace_path: string | null;
   consolidated_prompt: string | null;
   refined_design_brief: string | null;
-  model_params?: unknown;
   design_brief_base_values?: unknown;
-}
-
-interface UpdateParamsRequest {
-  session_id: string;
-  params: ModelParams;
-  blend_file?: string | null;
-  output_dir?: string | null;
-}
-
-interface UpdateParamsResponse {
-  session_id?: string;
-  glb_path: string | null;
-  stl_path: string | null;
-  status: string;
-  message?: string;
-  model_params?: unknown;
-  design_brief_base_values?: unknown;
+  runtime_validation_status?: string | null;
+  runtime_validation_mode?: string | null;
 }
 
 type WsEvent =
-  | { event: "connected"; session_id: string }
-  | { event: "generation.start"; session_id: string }
-  | { event: "generation.complete"; session_id: string; route_decision?: string; glb_path?: string; stl_path?: string }
-  | { event: "generation.error"; session_id: string; error: string }
-  | { event: "update_params.start"; session_id: string }
-  | { event: "update_params.complete"; session_id: string; glb_path?: string; stl_path?: string }
-  | { event: "update_params.error"; session_id: string; error: string };
+  | {
+      event: "connected";
+      session_id: string;
+    }
+  | {
+      event: "generation.start";
+      session_id: string;
+    }
+  | {
+      event: "generation.complete";
+      session_id: string;
+      route_decision?: string;
+      glb_path?: string;
+    }
+  | {
+      event: "generation.error";
+      session_id: string;
+      error: string;
+    };
 
 interface AppState {
   userInput: string;
-  modelParams: ModelParams;
+  briefFields: BriefFieldMap;
   modelUrl: string | null;
-  stlUrl: string | null;
+  scriptUrl: string | null;
+  traceUrl: string | null;
   isLoading: boolean;
   currentNode: string;
   logs: string[];
@@ -77,6 +72,8 @@ interface AppState {
   routeDecision: string | null;
   generatedScriptPath: string | null;
   tracePath: string | null;
+  runtimeValidationStatus: string | null;
+  runtimeValidationMode: string | null;
   wsConnected: boolean;
 
   setUserInput: (text: string) => void;
@@ -84,13 +81,12 @@ interface AppState {
   addLog: (entry: string) => void;
   addError: (entry: string) => void;
   clearLogs: () => void;
-  setModelParams: (params: ModelParams) => void;
-  updateParam: (key: string, value: ParamValue) => void;
   applyGenerateResult: (res: GenerateResponse) => void;
-  applyUpdateParamsResult: (res: UpdateParamsResponse, patch?: ModelParams) => void;
   applyWsEvent: (event: WsEvent) => void;
-  runGenerate: (userInput: string, overrides?: Omit<GenerateRequest, "user_input">) => Promise<GenerateResponse>;
-  runUpdateParams: (params: ModelParams, overrides?: Omit<UpdateParamsRequest, "session_id" | "params">) => Promise<UpdateParamsResponse>;
+  runGenerate: (
+    userInput: string,
+    overrides?: Omit<GenerateRequest, "user_input">,
+  ) => Promise<GenerateResponse>;
   disconnectSession: () => void;
   reset: () => void;
 }
@@ -104,36 +100,30 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function normalizeParamValue(value: unknown): ParamValue | null {
-  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+function normalizeDisplayValue(value: unknown): DisplayValue | null {
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean"
+  ) {
     return value;
   }
   return null;
 }
 
-function normalizeModelParams(value: unknown): ModelParams {
+function normalizeBriefFields(value: unknown): BriefFieldMap {
   if (!isRecord(value)) {
     return {};
   }
 
-  const normalized: ModelParams = {};
-
+  const normalized: BriefFieldMap = {};
   for (const [key, rawValue] of Object.entries(value)) {
-    const paramValue = normalizeParamValue(rawValue);
-    if (paramValue !== null) {
-      normalized[key] = paramValue;
+    const displayValue = normalizeDisplayValue(rawValue);
+    if (displayValue !== null) {
+      normalized[key] = displayValue;
     }
   }
-
   return normalized;
-}
-
-function extractModelParams(payload: { model_params?: unknown; design_brief_base_values?: unknown }): ModelParams {
-  const explicitParams = normalizeModelParams(payload.model_params);
-  if (Object.keys(explicitParams).length > 0) {
-    return explicitParams;
-  }
-  return normalizeModelParams(payload.design_brief_base_values);
 }
 
 function appendEntry(entries: string[], entry: string): string[] {
@@ -147,11 +137,33 @@ function appendEntry(entries: string[], entry: string): string[] {
   return [...entries, normalized];
 }
 
-function buildAssetUrl(kind: AssetKind, sessionId: string, assetPath: string | null | undefined): string | null {
+function buildAssetUrl(
+  kind: AssetKind,
+  sessionId: string,
+  assetPath: string | null | undefined,
+): string | null {
   if (!sessionId || !assetPath) {
     return null;
   }
   return `${API_BASE}/${kind}/${encodeURIComponent(sessionId)}?v=${Date.now()}`;
+}
+
+async function readErrorMessage(res: Response): Promise<string> {
+  const raw = await res.text();
+  if (!raw) {
+    return `Request failed with status ${res.status}`;
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (typeof parsed?.detail === "string" && parsed.detail.trim()) {
+      return parsed.detail;
+    }
+  } catch {
+    // Fall back to the raw response body.
+  }
+
+  return raw;
 }
 
 function formatError(error: unknown): string {
@@ -169,23 +181,7 @@ async function requestGenerate(payload: GenerateRequest): Promise<GenerateRespon
   });
 
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || `Generate failed with status ${res.status}`);
-  }
-
-  return res.json();
-}
-
-async function requestUpdateParams(payload: UpdateParamsRequest): Promise<UpdateParamsResponse> {
-  const res = await fetch(`${API_BASE}/update_params`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || `Update params failed with status ${res.status}`);
+    throw new Error(await readErrorMessage(res));
   }
 
   return res.json();
@@ -203,7 +199,8 @@ function openSessionSocket(sessionId: string) {
   if (
     ws &&
     wsSessionId === sessionId &&
-    (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)
+    (ws.readyState === WebSocket.OPEN ||
+      ws.readyState === WebSocket.CONNECTING)
   ) {
     return;
   }
@@ -223,7 +220,7 @@ function openSessionSocket(sessionId: string) {
       const message: WsEvent = JSON.parse(event.data);
       useStore.getState().applyWsEvent(message);
     } catch {
-      // Ignore non-JSON messages from the backend.
+      // Ignore unexpected messages from the backend.
     }
   };
 
@@ -240,9 +237,10 @@ function openSessionSocket(sessionId: string) {
 
 export const useStore = create<AppState>((set, get) => ({
   userInput: "",
-  modelParams: {},
+  briefFields: {},
   modelUrl: null,
-  stlUrl: null,
+  scriptUrl: null,
+  traceUrl: null,
   isLoading: false,
   currentNode: "",
   logs: [],
@@ -253,6 +251,8 @@ export const useStore = create<AppState>((set, get) => ({
   routeDecision: null,
   generatedScriptPath: null,
   tracePath: null,
+  runtimeValidationStatus: null,
+  runtimeValidationMode: null,
   wsConnected: false,
 
   setUserInput: (text) => set({ userInput: text }),
@@ -271,48 +271,28 @@ export const useStore = create<AppState>((set, get) => ({
 
   clearLogs: () => set({ logs: [], errors: [] }),
 
-  setModelParams: (params) => set({ modelParams: params }),
-
-  updateParam: (key, value) =>
-    set((state) => ({
-      modelParams: { ...state.modelParams, [key]: value },
-    })),
-
   applyGenerateResult: (res) =>
-    set((state) => {
-      const params = extractModelParams(res);
-      return {
-        isLoading: false,
-        sessionId: res.session_id,
-        routeDecision: res.route_decision,
-        generatedScriptPath: res.generated_script_path,
-        tracePath: res.trace_path,
-        consolidatedPrompt: res.consolidated_prompt,
-        refinedDesignBrief: res.refined_design_brief,
-        currentNode: "生成完成",
-        modelUrl: buildAssetUrl("glb", res.session_id, res.glb_path),
-        stlUrl: buildAssetUrl("stl", res.session_id, res.stl_path),
-        modelParams: Object.keys(params).length > 0 ? params : state.modelParams,
-        logs: [...state.logs, ...res.execution_log.filter(Boolean)],
-        errors: [...state.errors, ...res.errors.filter(Boolean)],
-      };
-    }),
-
-  applyUpdateParamsResult: (res, patch = {}) =>
-    set((state) => {
-      const nextSessionId = res.session_id ?? state.sessionId;
-      const paramsFromResponse = extractModelParams(res);
-      const nextParams =
-        Object.keys(paramsFromResponse).length > 0
-          ? paramsFromResponse
-          : { ...state.modelParams, ...patch };
-
-      return {
-        modelParams: nextParams,
-        modelUrl: buildAssetUrl("glb", nextSessionId, res.glb_path),
-        stlUrl: buildAssetUrl("stl", nextSessionId, res.stl_path),
-        currentNode: res.status === "passed" ? "参数更新完成" : "参数更新失败",
-      };
+    set({
+      isLoading: false,
+      sessionId: res.session_id,
+      routeDecision: res.route_decision,
+      generatedScriptPath: res.generated_script_path,
+      tracePath: res.trace_path,
+      consolidatedPrompt: res.consolidated_prompt,
+      refinedDesignBrief: res.refined_design_brief,
+      runtimeValidationStatus: res.runtime_validation_status ?? null,
+      runtimeValidationMode: res.runtime_validation_mode ?? null,
+      currentNode: "生成完成",
+      modelUrl: buildAssetUrl("glb", res.session_id, res.glb_path),
+      scriptUrl: buildAssetUrl(
+        "script",
+        res.session_id,
+        res.generated_script_path,
+      ),
+      traceUrl: buildAssetUrl("trace", res.session_id, res.trace_path),
+      briefFields: normalizeBriefFields(res.design_brief_base_values),
+      logs: res.execution_log.filter((entry) => entry.trim()),
+      errors: res.errors.filter((entry) => entry.trim()),
     }),
 
   applyWsEvent: (event) => {
@@ -329,38 +309,17 @@ export const useStore = create<AppState>((set, get) => ({
           isLoading: false,
           currentNode: "生成完成",
           routeDecision: event.route_decision ?? state.routeDecision,
-          modelUrl: event.glb_path ? buildAssetUrl("glb", event.session_id, event.glb_path) : state.modelUrl,
-          stlUrl: event.stl_path ? buildAssetUrl("stl", event.session_id, event.stl_path) : state.stlUrl,
+          modelUrl: event.glb_path
+            ? buildAssetUrl("glb", event.session_id, event.glb_path)
+            : state.modelUrl,
         }));
         get().addLog("✔ 生成完成");
         if (event.glb_path) {
           get().addLog(`✔ GLB: ${event.glb_path}`);
         }
-        if (event.stl_path) {
-          get().addLog(`✔ STL: ${event.stl_path}`);
-        }
         break;
       case "generation.error":
         set({ isLoading: false, currentNode: "生成失败" });
-        get().addError(event.error);
-        break;
-      case "update_params.start":
-        set({ currentNode: "参数更新中…" });
-        get().addLog("▶ 参数更新中…");
-        break;
-      case "update_params.complete":
-        set((state) => ({
-          currentNode: "参数更新完成",
-          modelUrl: event.glb_path ? buildAssetUrl("glb", event.session_id, event.glb_path) : state.modelUrl,
-          stlUrl: event.stl_path ? buildAssetUrl("stl", event.session_id, event.stl_path) : state.stlUrl,
-        }));
-        get().addLog("✔ 模型已更新");
-        if (event.stl_path) {
-          get().addLog(`✔ STL: ${event.stl_path}`);
-        }
-        break;
-      case "update_params.error":
-        set({ currentNode: "参数更新失败" });
         get().addError(event.error);
         break;
     }
@@ -375,14 +334,19 @@ export const useStore = create<AppState>((set, get) => ({
     const currentSessionId = get().sessionId;
     const sessionId = overrides.session_id ?? currentSessionId ?? `session_${Date.now()}`;
 
-    set({
+    set((state) => ({
       isLoading: true,
       userInput: trimmedInput,
       sessionId,
       currentNode: "准备生成…",
       logs: [`用户: ${trimmedInput}`],
       errors: [],
-    });
+      routeDecision: state.routeDecision,
+      modelUrl: state.modelUrl,
+      scriptUrl: state.scriptUrl,
+      traceUrl: state.traceUrl,
+      briefFields: state.briefFields,
+    }));
 
     openSessionSocket(sessionId);
 
@@ -402,41 +366,6 @@ export const useStore = create<AppState>((set, get) => ({
     }
   },
 
-  runUpdateParams: async (params, overrides = {}) => {
-    const sessionId = get().sessionId;
-    if (!sessionId) {
-      throw new Error("当前没有可更新的会话");
-    }
-
-    set((state) => ({
-      modelParams: { ...state.modelParams, ...params },
-      currentNode: "参数更新中…",
-    }));
-
-    get().addLog(
-      `参数变更: ${Object.entries(params)
-        .map(([key, value]) => `${key}=${String(value)}`)
-        .join(", ")}`,
-    );
-
-    openSessionSocket(sessionId);
-
-    try {
-      const res = await requestUpdateParams({
-        session_id: sessionId,
-        params,
-        ...overrides,
-      });
-      get().applyUpdateParamsResult(res, params);
-      return res;
-    } catch (error) {
-      const message = formatError(error);
-      set({ currentNode: "参数更新失败" });
-      get().addError(message);
-      throw error;
-    }
-  },
-
   disconnectSession: () => {
     closeSessionSocket();
     set({ wsConnected: false });
@@ -446,9 +375,10 @@ export const useStore = create<AppState>((set, get) => ({
     closeSessionSocket();
     set({
       userInput: "",
-      modelParams: {},
+      briefFields: {},
       modelUrl: null,
-      stlUrl: null,
+      scriptUrl: null,
+      traceUrl: null,
       isLoading: false,
       currentNode: "",
       logs: [],
@@ -459,6 +389,8 @@ export const useStore = create<AppState>((set, get) => ({
       routeDecision: null,
       generatedScriptPath: null,
       tracePath: null,
+      runtimeValidationStatus: null,
+      runtimeValidationMode: null,
       wsConnected: false,
     });
   },
