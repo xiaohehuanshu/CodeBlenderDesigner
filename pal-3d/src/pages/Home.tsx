@@ -1,8 +1,60 @@
-import React from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Terminal, Box, FileText, Layers, ArrowRight, CheckCircle2, Cpu, Database, Layout, Search } from 'lucide-react';
+import { Terminal, Box, FileText, Layers, ArrowRight, CheckCircle2, Cpu, Database, Layout, Search, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/src/lib/utils';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls, useGLTF, Environment } from '@react-three/drei';
+
+// 3D Model component
+function Model({ url }: { url: string }) {
+  const { scene } = useGLTF(url);
+  return <primitive object={scene} />;
+}
+
+// Simple loading spinner
+function LoadingSpinner() {
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/5 z-10">
+      <Loader2 className="w-8 h-8 text-accent animate-spin" />
+      <span className="mt-3 text-xs text-white/40 font-mono">Loading...</span>
+    </div>
+  );
+}
+
+// 3D Viewer for cards
+function CardModelViewer({ url }: { url: string }) {
+  const [isLoading, setIsLoading] = useState(true);
+
+  return (
+    <div className="relative w-full h-full">
+      {isLoading && <LoadingSpinner />}
+      <Canvas
+        camera={{ position: [4, 3, 4], fov: 40 }}
+        dpr={[1, 2]}
+        className="w-full h-full"
+        onCreated={() => setIsLoading(false)}
+      >
+        <Suspense fallback={null}>
+          <ambientLight intensity={0.6} />
+          <directionalLight position={[5, 5, 5]} intensity={0.8} />
+          <Environment preset="city" />
+          <Model url={url} />
+          <OrbitControls
+            enableZoom={true}
+            enablePan={false}
+            autoRotate
+            autoRotateSpeed={2}
+            minPolarAngle={Math.PI / 4}
+            maxPolarAngle={Math.PI * 0.75}
+            minDistance={2}
+            maxDistance={10}
+          />
+        </Suspense>
+      </Canvas>
+    </div>
+  );
+}
 
 export function Home() {
   return (
@@ -172,40 +224,35 @@ export function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             {[
-              { 
-                title: '参数化滨海博物馆', 
-                tag: '文化建筑', 
-                img: 'https://picsum.photos/seed/arch1/800/600',
+              {
+                title: '参数化滨海博物馆',
+                tag: '文化建筑',
+                model: '/test.glb',
                 desc: '通过流体动力学模拟生成的有机建筑形态，优化了海风循环与自然采光。'
               },
-              { 
-                title: '高层办公集群优化', 
-                tag: '商业综合体', 
-                img: 'https://picsum.photos/seed/arch2/800/600',
+              {
+                title: '高层办公集群优化',
+                tag: '商业综合体',
+                model: '/test.glb',
                 desc: '基于日照分析自动调整楼体间距与立面遮阳系统，降低能耗。'
               },
-              { 
-                title: '模块化社区中心', 
-                tag: '公共空间', 
-                img: 'https://picsum.photos/seed/arch3/800/600',
+              {
+                title: '模块化社区中心',
+                tag: '公共空间',
+                model: '/test.glb',
                 desc: '利用预制构件逻辑生成的灵活空间，支持多种社区活动场景切换。'
               },
             ].map((item, i) => (
-              <motion.div 
+              <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="group cursor-pointer"
+                className="group"
               >
-                <div className="aspect-[4/3] overflow-hidden mb-6 bg-white/5">
-                  <img 
-                    src={item.img} 
-                    alt={item.title} 
-                    className="w-full h-full object-cover grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 scale-105 group-hover:scale-100"
-                    referrerPolicy="no-referrer"
-                  />
+                <div className="aspect-[4/3] overflow-hidden mb-6 bg-gradient-to-br from-white/10 to-white/5 relative cursor-pointer">
+                  <CardModelViewer url={item.model} />
                 </div>
                 <div className="flex items-center gap-3 mb-3">
                   <span className="text-[10px] font-mono uppercase tracking-widest text-accent">{item.tag}</span>

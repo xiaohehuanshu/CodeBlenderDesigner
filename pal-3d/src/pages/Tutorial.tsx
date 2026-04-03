@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { BookOpen, FileText, Box, Cpu, Layout, ArrowRight, CheckCircle2, Info } from 'lucide-react';
+import { MousePointer2, RotateCw, ZoomIn, Box, Eye, Layout, ArrowRight, Home, FileText, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export function Tutorial() {
@@ -9,46 +9,41 @@ export function Tutorial() {
       <div className="max-w-4xl mx-auto">
         <header className="mb-20 text-center">
           <div className="inline-block px-3 py-1 bg-accent/10 text-accent text-[10px] font-mono uppercase tracking-[0.2em] mb-6">
-            Beginner Tutorial
+            User Guide
           </div>
-          <h1 className="text-5xl font-bold tracking-tight mb-6">Pal 3D 新手快速上手指南</h1>
+          <h1 className="text-5xl font-bold tracking-tight mb-6">网站使用指南</h1>
           <p className="text-xl text-ink/50 leading-relaxed">
-            欢迎使用 Pal 3D。本教程将带您了解如何从零开始使用这个 AI 驱动的建筑空间设计 Agent 系统。
+            欢迎使用 Pal 3D。本指南将带您快速了解网站功能与 3D 模型查看技巧。
           </p>
         </header>
 
         <div className="space-y-24">
-          {/* Section 1: What is Pal 3D */}
+          {/* Section 1: 3D View Controls */}
           <section>
             <div className="flex items-center gap-4 mb-8">
               <div className="w-12 h-12 bg-ink text-white flex items-center justify-center font-bold text-xl">01</div>
-              <h2 className="text-2xl font-bold">什么是 Pal 3D？</h2>
+              <h2 className="text-2xl font-bold">3D 模型查看操作</h2>
             </div>
-            <div className="prose prose-slate max-w-none text-ink/70 leading-loose">
-              <p>
-                Pal 3D 是一个基于 <strong>LangGraph</strong> 框架开发的建筑空间设计智能代理（Agent）。它不是一个简单的 3D 建模工具，而是一个能够理解复杂设计需求、分析多维上下文，并自动生成 Blender Python 脚本的“数字建筑师”。
-              </p>
-              <p>
-                它的核心目标是：<strong>让 AI 成为您的创作伙伴（Pal），共同完成从概念到几何生成的全过程。</strong>
-              </p>
-            </div>
-          </section>
-
-          {/* Section 2: What can Pal 3D do */}
-          <section>
-            <div className="flex items-center gap-4 mb-8">
-              <div className="w-12 h-12 bg-ink text-white flex items-center justify-center font-bold text-xl">02</div>
-              <h2 className="text-2xl font-bold">Pal 3D 能做什么？</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
-                { title: '需求深度解析', desc: '自动从模糊的自然语言中提取建筑功能、面积、层高等硬性指标。', icon: <FileText className="text-accent" /> },
-                { title: '多源上下文合成', desc: '结合地形 (.blend)、设计规范 (Markdown) 与参考图进行综合决策。', icon: <Layout className="text-accent" /> },
-                { title: '自动化建模脚本', desc: '生成高质量、可运行的 Blender Python 脚本，直接构建 3D 几何体。', icon: <Box className="text-accent" /> },
-                { title: '闭环调试与验证', desc: '在虚拟环境中运行脚本，发现错误后自动进行逻辑修正与代码重写。', icon: <Cpu className="text-accent" /> },
+                {
+                  title: '旋转视角',
+                  desc: '按住鼠标左键拖动，即可 360° 旋转查看模型',
+                  icon: <RotateCw className="text-accent" size={24} />
+                },
+                {
+                  title: '缩放模型',
+                  desc: '滚动鼠标滚轮，放大或缩小查看细节',
+                  icon: <ZoomIn className="text-accent" size={24} />
+                },
+                {
+                  title: '平移视角',
+                  desc: '按住鼠标右键拖动，平移查看不同角度',
+                  icon: <MousePointer2 className="text-accent" size={24} />
+                },
               ].map((item, i) => (
-                <div key={i} className="p-6 bg-white border border-border-subtle shadow-sm">
-                  <div className="mb-4">{item.icon}</div>
+                <div key={i} className="p-6 bg-white border border-border-subtle shadow-sm text-center">
+                  <div className="mb-4 flex justify-center">{item.icon}</div>
                   <h4 className="font-bold mb-2">{item.title}</h4>
                   <p className="text-sm text-ink/50">{item.desc}</p>
                 </div>
@@ -56,143 +51,128 @@ export function Tutorial() {
             </div>
           </section>
 
-          {/* Section 3: Prerequisites */}
+          {/* Section 2: Navigation */}
+          <section>
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-12 h-12 bg-ink text-white flex items-center justify-center font-bold text-xl">02</div>
+              <h2 className="text-2xl font-bold">网站导航说明</h2>
+            </div>
+            <div className="space-y-4">
+              {[
+                {
+                  name: '首页',
+                  path: '/',
+                  icon: <Home size={20} />,
+                  desc: '浏览精选 3D 案例展示，支持交互式查看'
+                },
+                {
+                  name: '工作流',
+                  path: '/workflow',
+                  icon: <Layout size={20} />,
+                  desc: '了解 Pal 3D 的 8 节点工作流架构'
+                },
+                {
+                  name: '案例',
+                  path: '/cases',
+                  icon: <Box size={20} />,
+                  desc: '查看更多详细的项目案例研究'
+                },
+                {
+                  name: '文档',
+                  path: '/docs',
+                  icon: <FileText size={20} />,
+                  desc: '阅读技术文档与 API 说明'
+                },
+                {
+                  name: '探索',
+                  path: '/explore',
+                  icon: <Search size={20} />,
+                  desc: '体验交互式设计控制台'
+                },
+              ].map((item, i) => (
+                <Link
+                  key={i}
+                  to={item.path}
+                  className="flex items-center gap-4 p-5 bg-white border border-border-subtle hover:border-accent hover:shadow-md transition-all group"
+                >
+                  <div className="w-10 h-10 bg-ink/5 flex items-center justify-center text-accent group-hover:bg-accent group-hover:text-white transition-colors">
+                    {item.icon}
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-bold">{item.name}</h4>
+                    <p className="text-sm text-ink/50">{item.desc}</p>
+                  </div>
+                  <ArrowRight size={18} className="text-ink/20 group-hover:text-accent group-hover:translate-x-1 transition-all" />
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          {/* Section 3: Case Viewing */}
           <section>
             <div className="flex items-center gap-4 mb-8">
               <div className="w-12 h-12 bg-ink text-white flex items-center justify-center font-bold text-xl">03</div>
-              <h2 className="text-2xl font-bold">使用前需要准备什么？</h2>
+              <h2 className="text-2xl font-bold">案例查看技巧</h2>
             </div>
-            <div className="bg-white border border-border-subtle p-8 space-y-4">
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="text-accent shrink-0 mt-1" size={18} />
-                <p className="text-ink/70 text-sm"><strong>Python 环境：</strong> 安装 Python 3.10 或更高版本。</p>
+            <div className="bg-white border border-border-subtle p-8 space-y-6">
+              <div className="flex items-start gap-4">
+                <Eye className="text-accent shrink-0 mt-1" size={20} />
+                <div>
+                  <h4 className="font-bold mb-2">首页预览</h4>
+                  <p className="text-sm text-ink/60">首页展示三个精选案例，鼠标悬停在卡片上即可看到交互效果。直接在卡片上拖拽可旋转查看 3D 模型。</p>
+                </div>
               </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="text-accent shrink-0 mt-1" size={18} />
-                <p className="text-ink/70 text-sm"><strong>Blender：</strong> 建议安装 Blender 4.0+，并确保其可执行路径已配置。</p>
+              <div className="flex items-start gap-4">
+                <Box className="text-accent shrink-0 mt-1" size={20} />
+                <div>
+                  <h4 className="font-bold mb-2">详细案例页</h4>
+                  <p className="text-sm text-ink/60">点击"查看全部案例"进入案例列表，选择感兴趣的案例查看详细设计说明与更多展示图。</p>
+                </div>
               </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="text-accent shrink-0 mt-1" size={18} />
-                <p className="text-ink/70 text-sm"><strong>API Key：</strong> 获取 Google Gemini API Key 并配置为环境变量 <code>GEMINI_API_KEY</code>。</p>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="text-accent shrink-0 mt-1" size={18} />
-                <p className="text-ink/70 text-sm"><strong>依赖安装：</strong> 在终端运行 <code>pip install -r requirements.txt</code>。</p>
+              <div className="flex items-start gap-4">
+                <Search className="text-accent shrink-0 mt-1" size={20} />
+                <div>
+                  <h4 className="font-bold mb-2">探索控制台</h4>
+                  <p className="text-sm text-ink/60">进入"探索"页面体验交互式设计控制台，查看 AI 如何处理设计需求。</p>
+                </div>
               </div>
             </div>
           </section>
 
-          {/* Section 4: Starting Input */}
+          {/* Section 4: Tips */}
           <section>
             <div className="flex items-center gap-4 mb-8">
               <div className="w-12 h-12 bg-ink text-white flex items-center justify-center font-bold text-xl">04</div>
-              <h2 className="text-2xl font-bold">如何开始第一轮输入？</h2>
-            </div>
-            <div className="space-y-6">
-              <p className="text-ink/70 leading-relaxed">
-                Pal 3D 推荐通过 <code>run_agent.py</code> 启动。您可以通过配置文件或交互模式提供指令。
-              </p>
-              <div className="bg-ink text-bg-warm p-6 font-mono text-xs">
-                # 方式 A：使用配置文件启动<br />
-                python run_agent.py --config ./requests/case_001.json<br /><br />
-                # 方式 B：进入交互模式<br />
-                python run_agent.py --interactive
-              </div>
-            </div>
-          </section>
-
-          {/* Section 5: Key Concepts */}
-          <section>
-            <div className="flex items-center gap-4 mb-8">
-              <div className="w-12 h-12 bg-ink text-white flex items-center justify-center font-bold text-xl">05</div>
-              <h2 className="text-2xl font-bold">核心概念解析</h2>
-            </div>
-            <div className="space-y-8">
-              <div className="p-6 bg-white border border-border-subtle">
-                <h4 className="font-bold mb-4 flex items-center gap-2"><FileText size={18} className="text-accent" /> 配置文件与模式</h4>
-                <ul className="space-y-4 text-sm text-ink/60">
-                  <li><strong>request_case_001.json：</strong> 任务的“总指挥部”，定义了提示词路径、上下文路径及运行开关。</li>
-                  <li><strong>prompt_file：</strong> 存放具体设计需求的文本文件，支持 Markdown 格式。</li>
-                  <li><strong>interactive 模式：</strong> 允许您在终端直接输入指令，适合快速实验与微调。</li>
-                </ul>
-              </div>
-              <div className="p-6 bg-white border border-border-subtle">
-                <h4 className="font-bold mb-4 flex items-center gap-2"><Layout size={18} className="text-accent" /> 输入数据类型</h4>
-                <ul className="space-y-4 text-sm text-ink/60">
-                  <li><strong>参考图片：</strong> 提供视觉风格、色彩或形式参考，Agent 会进行视觉特征提取。</li>
-                  <li><strong>Markdown 规则：</strong> 导入结构化的设计规范（如：建筑间距、容积率限制）。</li>
-                  <li><strong>几何上下文 / blend_file：</strong> 导入现有的场景模型，Agent 会根据地形起伏或周边建筑调整生成位置。</li>
-                </ul>
-              </div>
-            </div>
-          </section>
-
-          {/* Section 6: Outputs */}
-          <section>
-            <div className="flex items-center gap-4 mb-8">
-              <div className="w-12 h-12 bg-ink text-white flex items-center justify-center font-bold text-xl">06</div>
-              <h2 className="text-2xl font-bold">生成结果会输出到哪里？</h2>
-            </div>
-            <div className="bg-bg-warm p-8 border border-border-subtle">
-              <p className="text-sm text-ink/70 mb-6">所有生成的内容都存放在 <code>outputs/</code> 目录下：</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-mono text-xs">
-                <div className="p-4 bg-white border border-border-subtle">
-                  <span className="text-accent">generated_scripts/</span><br />
-                  <span className="text-ink/40">最终生成的 .py 脚本</span>
-                </div>
-                <div className="p-4 bg-white border border-border-subtle">
-                  <span className="text-accent">memory/</span><br />
-                  <span className="text-ink/40">Agent 的长期记忆与状态</span>
-                </div>
-                <div className="p-4 bg-white border border-border-subtle">
-                  <span className="text-accent">traces/</span><br />
-                  <span className="text-ink/40">完整的思考与纠错链路</span>
-                </div>
-                <div className="p-4 bg-white border border-border-subtle">
-                  <span className="text-accent">internet_research/</span><br />
-                  <span className="text-ink/40">联网搜索到的参考资料</span>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Section 7: Iteration */}
-          <section>
-            <div className="flex items-center gap-4 mb-8">
-              <div className="w-12 h-12 bg-ink text-white flex items-center justify-center font-bold text-xl">07</div>
-              <h2 className="text-2xl font-bold">如何继续进行多轮修改？</h2>
-            </div>
-            <div className="prose prose-slate max-w-none text-ink/70 leading-loose">
-              <p>
-                Pal 3D 支持<strong>增量式设计</strong>。在第一轮生成后，您可以直接在交互模式下输入修改意见（例如：“将屋顶改为坡屋顶”或“增加二层露台”）。
-              </p>
-              <p>
-                Agent 会读取 <code>outputs/memory</code> 中的历史上下文，在保留原有逻辑的基础上，仅针对您的新需求更新 Python 脚本。
-              </p>
-            </div>
-          </section>
-
-          {/* Section 8: Notes */}
-          <section>
-            <div className="flex items-center gap-4 mb-8">
-              <div className="w-12 h-12 bg-ink text-white flex items-center justify-center font-bold text-xl">08</div>
-              <h2 className="text-2xl font-bold">基本注意事项</h2>
+              <h2 className="text-2xl font-bold">使用小贴士</h2>
             </div>
             <div className="p-8 bg-accent/5 border border-accent/20 rounded-xl">
               <ul className="space-y-4 text-sm text-ink/70">
-                <li className="flex gap-3"><Info size={18} className="text-accent shrink-0" /> <strong>单位统一：</strong> 默认使用 Blender 的米 (m) 作为单位，请在提示词中明确数值。</li>
-                <li className="flex gap-3"><Info size={18} className="text-accent shrink-0" /> <strong>API 消耗：</strong> 复杂的联网搜索与多轮调试会消耗较多 Token，请注意 API 使用额度。</li>
-                <li className="flex gap-3"><Info size={18} className="text-accent shrink-0" /> <strong>脚本安全：</strong> 生成的脚本在本地运行，请确保您的 Blender 环境安全。</li>
+                <li className="flex gap-3">
+                  <span className="text-accent font-bold">•</span>
+                  <span><strong>最佳体验：</strong>建议使用桌面端浏览器访问，以获得最佳的 3D 交互体验。</span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="text-accent font-bold">•</span>
+                  <span><strong>自动旋转：</strong>首页案例模型支持自动旋转展示，手动操作时会暂停自动旋转。</span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="text-accent font-bold">•</span>
+                  <span><strong>加载速度：</strong>3D 模型文件较大，首次加载可能需要几秒钟，请耐心等待。</span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="text-accent font-bold">•</span>
+                  <span><strong>快捷导航：</strong>点击顶部导航栏可快速切换页面，底部 Footer 也有完整导航。</span>
+                </li>
               </ul>
             </div>
           </section>
         </div>
 
         <div className="mt-32 p-12 bg-ink text-white text-center">
-          <h2 className="text-3xl font-bold mb-6">准备好开始了吗？</h2>
-          <p className="text-white/50 mb-10">现在就进入控制台，开启您的第一个建筑 AI 实验。</p>
-          <Link to="/explore" className="inline-flex items-center gap-2 bg-accent text-white px-10 py-4 font-bold hover:bg-white hover:text-ink transition-all">
-            进入控制台 <ArrowRight size={18} />
+          <h2 className="text-3xl font-bold mb-6">准备开始探索了吗？</h2>
+          <p className="text-white/50 mb-10">现在就返回首页，体验 3D 模型交互查看。</p>
+          <Link to="/" className="inline-flex items-center gap-2 bg-accent text-white px-10 py-4 font-bold hover:bg-white hover:text-ink transition-all">
+            返回首页 <ArrowRight size={18} />
           </Link>
         </div>
       </div>
